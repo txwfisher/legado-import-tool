@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>阅读 · 链接净化导入</title>
+<style>
+:root {
+    --green: #3dba6f; --green-d: #2e9e5a;
+    --bg: #f0f3f0; --card: #ffffff;
+    --text: #1e2a22; --sub: #6b7c6f; --line: #e2e8e4;
+    --radius: 16px;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg:#141916; --card:#1e2220; --text:#d4ddd6;
+        --sub:#819084; --line:#2a312c;
+    }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px; gap: 16px;
+}
+.card {
+    width: 100%; max-width: 440px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    padding: 24px;
+}
+h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+.sub { font-size: .78rem; color: var(--sub); margin-bottom: 20px; }
+
+textarea {
+    width: 100%; height: 100px; padding: 12px;
+    border-radius: 12px; border: 1.5px solid var(--line);
+    background: transparent; color: var(--text);
+    font-size: .9rem; resize: vertical; outline: none;
+    margin-bottom: 12px; font-family: inherit;
+}
+textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(61,186,111,.12); }
+textarea::placeholder { color: var(--sub); opacity: .6; }
+
+.result {
+    min-height: 56px; max-height: 120px; overflow-y: auto;
+    padding: 12px; border-radius: 12px;
+    border: 1.5px dashed var(--line);
+    background: rgba(61,186,111,.04);
+    font-size: .82rem; color: var(--green-d);
+    word-break: break-all; margin-bottom: 20px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+
+.btn-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+.btn {
+    padding: 11px 6px; border: none; border-radius: 12px;
+    font-size: .78rem; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+    transition: transform .12s, background .18s;
+}
+.btn:active { transform: scale(.96); }
+
+.btn-outline {
+    background: transparent; color: var(--sub);
+    border: 1.5px solid var(--line);
+}
+.btn-outline:hover { border-color: var(--green); color: var(--green); background: rgba(61,186,111,.05); }
+
+.btn-green {
+    background: linear-gradient(135deg, var(--green), #34c972);
+    color: #fff; box-shadow: 0 2px 12px rgba(61,186,111,.25);
+}
+.btn-green:hover { box-shadow: 0 4px 18px rgba(61,186,111,.35); }
+
+/* 页脚样式 */
+.footer {
+    font-size: .75rem; color: var(--sub);
+    text-align: center;
+}
+.footer a {
+    color: var(--green-d);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color .2s;
+}
+.footer a:hover { color: var(--green); text-decoration: underline; }
+
+.toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg);
+    font-size: .82rem; padding: 10px 20px; border-radius: 40px;
+    opacity: 0; transition: opacity .3s;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h1>🔗 链接净化导入</h1>
+    <p class="sub">支持 Base64 / Data URI / 杂乱文本</p>
+
+    <textarea id="inp" placeholder="在此粘贴内容..."></textarea>
+    
+    <div class="result" id="out">净化结果将显示在这里</div>
+
+    <div class="btn-grid">
+        <button class="btn btn-outline" onclick="clearAll()">清空</button>
+        <button class="btn btn-outline" onclick="purify()">净化</button>
+        <button class="btn btn-outline" onclick="copyRes()">复制</button>
+        <button class="btn btn-green" onclick="importToLegado()">导入</button>
+    </div>
+</div>
+
+<!-- 页脚链接 -->
+<div class="footer">
+    由 TuCong 提供技术支持 · <a href="https://www.tucong.vip" target="_blank" rel="noopener noreferrer">前往博客</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let timer;
+function toast(msg) {
+    clearTimeout(timer);
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function purify() {
+    let s = $('inp').value.trim();
+    if (!s) { toast('请输入内容'); return; }
+
+    if (s.startsWith('data:')) {
+        try { s = atob(s.split(',')[1]); } catch {}
+    }
+    if (/^[A-Za-z0-9+/=]+$/.test(s)) {
+        try { s = atob(s); } catch {}
+    }
+
+    const m = s.match(/(https?:\/\/[^\s"'<>]+)/i);
+    const res = m ? m[1] : '未找到有效链接';
+    
+    $('out').textContent = res;
+    toast('净化完成');
+}
+
+function clearAll() {
+    $('inp').value = ''; $('out').textContent = '净化结果将显示在这里';
+    toast('已清空');
+}
+
+function copyRes() {
+    const txt = $('out').textContent;
+    if (!txt || txt.includes('将显示') || txt.includes('未找到')) { toast('没有可复制的内容'); return; }
+    navigator.clipboard.writeText(txt);
+    toast('已复制');
+}
+
+function importToLegado() {
+    let url = $('out').textContent.trim();
+    
+    if (!url || url.includes('将显示') || url.includes('未找到')) {
+        purify();
+        url = $('out').textContent.trim();
+        if (!url || url.includes('未找到') || url.includes('将显示')) {
+            toast('无法导入，请检查链接');
+            return;
+        }
+    }
+
+    let scheme = 'legado://import/Source?src=' + encodeURIComponent(url);
+    if (/\.zip$/i.test(url)) {
+        scheme = 'legado://import/bookSource?src=' + encodeURIComponent(url);
+    } else if (!/\.(json|txt)$/i.test(url)) {
+        scheme = 'legado://import/addToBookshelf?src=' + encodeURIComponent(url);
+    }
+    location.href = scheme;
+    toast('正在导入阅读...');
+}
+</script>
+</body>
+</html>
