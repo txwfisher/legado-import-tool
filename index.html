@@ -113,12 +113,13 @@
 
         .btn-row {
             display: flex;
-            gap: 52px;
+            gap: 12px; /* 调整间距 */
             width: 100%;
-            justify-content: center;
+            justify-content: space-between; /* 均匀分布 */
             margin-top: 4px;
             padding: 0 8px;
         }
+        
         .btn-icon {
             width: 44px;
             height: 44px;
@@ -134,16 +135,28 @@
             flex-shrink: 0;
             outline: none;
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
+            transition: transform var(--transition), background-color 0.2s;
         }
-        .btn-icon i {
-            font-size: 1.2rem;
-            line-height: 1;
+        .btn-icon:hover {
+            background-color: rgba(0, 0, 0, 0.04); /* 幽灵按钮悬停效果 */
         }
         .btn-icon:active {
             transform: scale(0.93);
         }
-        .btn-icon:hover {
-            color: #000;
+
+        /* 主按钮样式（导入） */
+        .btn-icon.btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-icon.btn-primary:hover {
+            background: #4a6ee0; /* 稍微深一点的蓝色 */
+            color: #fff;
+        }
+
+        .btn-icon i {
+            font-size: 1.2rem;
+            line-height: 1;
         }
 
         .divider {
@@ -153,7 +166,8 @@
             margin: 4px 0 2px;
         }
 
-        .yanwen {
+        /* 底部文字样式 */
+        .footer-text {
             font-size: 0.9rem;
             color: #7f8c8d;
             text-align: center;
@@ -162,11 +176,12 @@
             user-select: none;
             padding-bottom: 4px;
         }
-        .yanwen a {
+        .footer-text a {
             color: var(--accent);
             text-decoration: none;
+            font-weight: bold;
         }
-        .yanwen a:hover {
+        .footer-text a:hover {
             text-decoration: underline;
         }
 
@@ -206,7 +221,7 @@
                 font-size: 1.15rem;
             }
             .btn-row {
-                gap: 18px;
+                gap: 8px;
             }
             .title {
                 font-size: 1.2rem;
@@ -220,8 +235,13 @@
                 font-size: 0.8rem;
                 max-width: 70%;
             }
+            .footer-text {
+                font-size: 0.85rem;
+            }
         }
     </style>
+    <!-- 引入 FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="card">
@@ -244,23 +264,25 @@
 
         <div class="btn-row">
             <button class="btn-icon" id="btn2" onclick="cleart()" title="清空">
-                🗑️
+                <i class="fa-solid fa-trash-can"></i>
             </button>
             <button class="btn-icon" id="btn3" onclick="purify()" title="净化">
-                ✨
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
             </button>
             <button class="btn-icon" id="btnCopy" onclick="copyProcessed()" title="复制">
-                📋
+                <i class="fa-solid fa-clipboard"></i>
             </button>
-            <button class="btn-icon" id="btn1" onclick="importContent()" title="导入">
-                🚀
+            <!-- 主按钮添加 btn-primary 类 -->
+            <button class="btn-icon btn-primary" id="btn1" onclick="importContent()" title="导入">
+                <i class="fa-solid fa-rocket"></i>
             </button>
         </div>
 
         <hr class="divider">
 
-        <div class="yanwen">
-            由 <a href="https://tucong.vip" target="_blank">Tuco's</a> 强力驱动
+        <!-- 修改后的底部文字 -->
+        <div class="footer-text">
+            由 <a href="https://tucong.vip/" target="_blank">Tuco's Home</a> 强力驱动
         </div>
     </div>
 
@@ -278,12 +300,12 @@
                 }, duration);
             }
 
-            // 核心净化逻辑（优化版：处理中文干扰、断行拼接）
+            // 核心净化逻辑
             function purifyUrl(input) {
                 let url = input.trim();
                 if (!url) return '未找到有效链接';
 
-                // 1. 解码处理（Base64/Data URI）
+                // 1. 解码处理
                 try {
                     if (url.startsWith('data:')) {
                         url = atob(url.split(',')[1] || '');
@@ -292,22 +314,23 @@
                     }
                 } catch (e) {}
 
-                // 2. 强力去噪（针对“哦哦yuan.nyasa你好好4207a465d0.json”）
-                url = url.replace(/[\u4e00-\u9fa5]/g, ''); // 移除所有中文
-                url = url.replace(/[网盘链接提取码复制\s\n\r\t]/g, ''); // 移除干扰词和空白
+                // 2. 强力去噪
+                url = url.replace(/[\u4e00-\u9fa5]/g, ''); 
+                url = url.replace(/[网盘链接提取码复制\s
+\r\t]/g, ''); 
 
-                // 3. 提取有效链接（支持断行拼接）
+                // 3. 提取有效链接
                 let match = url.match(/(https?:\/\/|www\.)[^\s'"]+/gi);
                 if (match && match.length > 0) {
-                    url = match.join(''); // 拼接断行片段
+                    url = match.join(''); 
                 }
 
-                // 4. 最终校验与补全
+                // 4. 最终校验
                 match = url.match(/(https?:\/\/[^\s'"]+)/i);
                 if (match) {
                     return match[1];
                 } else if (url.includes('.json') || url.includes('.txt') || url.includes('.zip')) {
-                    return 'https://' + url; // 补全协议
+                    return 'https://' + url; 
                 }
 
                 return '未找到有效链接';
@@ -318,7 +341,6 @@
                 const originalText = document.getElementById("copyt");
                 let url = processedText.value.trim();
 
-                // 若输出为空/默认文本，先自动净化
                 if (!url || url.includes('净化后的链接') || url.includes('未找到')) {
                     const originalUrl = originalText.value.trim();
                     if (!originalUrl) {
@@ -334,9 +356,7 @@
                 }
 
                 const encodedUrl = encodeURIComponent(url);
-
                 try {
-                    // 智能识别导入类型
                     let scheme = 'legado://import/Source?src=' + encodedUrl;
                     if (/\.zip$/i.test(url)) {
                         scheme = 'legado://import/bookSource?src=' + encodedUrl;
